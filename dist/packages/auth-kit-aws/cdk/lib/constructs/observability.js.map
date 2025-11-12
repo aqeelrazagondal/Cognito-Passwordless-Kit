@@ -1,0 +1,1 @@
+{"version":3,"file":"observability.js","sourceRoot":"","sources":["../../../../../../packages/auth-kit-aws/cdk/lib/constructs/observability.ts"],"names":[],"mappings":";;;AAAA,2CAAuC;AAcvC,MAAa,sBAAuB,SAAQ,sBAAS;IAGnD,YAAY,KAAgB,EAAE,EAAU,EAAE,KAAkC;QAC1E,KAAK,CAAC,KAAK,EAAE,EAAE,CAAC,CAAC;QAGjB,IAAI,CAAC,YAAY,GAAG,2CAA2C,CAAC;IAClE,CAAC;CACF;AATD,wDASC"}

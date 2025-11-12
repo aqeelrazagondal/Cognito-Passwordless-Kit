@@ -1,0 +1,1 @@
+{"version":3,"file":"comms.js","sourceRoot":"","sources":["../../../../../../packages/auth-kit-aws/cdk/lib/constructs/comms.ts"],"names":[],"mappings":";;;AAAA,2CAAuC;AASvC,MAAa,cAAe,SAAQ,sBAAS;IAI3C,YAAY,KAAgB,EAAE,EAAU,EAAE,KAA0B;QAClE,KAAK,CAAC,KAAK,EAAE,EAAE,CAAC,CAAC;QAGjB,IAAI,CAAC,QAAQ,GAAG,EAAe,CAAC;QAChC,IAAI,CAAC,WAAW,GAAG,qBAAqB,CAAC;IAC3C,CAAC;CACF;AAXD,wCAWC"}

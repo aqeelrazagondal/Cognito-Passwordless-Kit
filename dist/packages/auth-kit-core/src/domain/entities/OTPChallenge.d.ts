@@ -1,0 +1,94 @@
+import { Identifier } from '../value-objects/Identifier';
+export type ChallengeIntent = 'login' | 'bind' | 'verifyContact';
+export type ChallengeChannel = 'sms' | 'email' | 'whatsapp';
+export type ChallengeStatus = 'pending' | 'verified' | 'failed' | 'expired';
+export interface OTPChallengeProps {
+    id: string;
+    identifier: Identifier;
+    channel: ChallengeChannel;
+    intent: ChallengeIntent;
+    codeHash: string;
+    expiresAt: Date;
+    attempts: number;
+    maxAttempts: number;
+    resendCount: number;
+    maxResends: number;
+    ipHash?: string;
+    deviceId?: string;
+    status: ChallengeStatus;
+    createdAt: Date;
+    lastAttemptAt?: Date;
+}
+export declare class OTPChallenge {
+    private props;
+    private constructor();
+    static create(params: {
+        identifier: Identifier;
+        channel: ChallengeChannel;
+        intent: ChallengeIntent;
+        code: string;
+        ipHash?: string;
+        deviceId?: string;
+        validityMinutes?: number;
+        maxAttempts?: number;
+        maxResends?: number;
+    }): OTPChallenge;
+    static fromPersistence(props: OTPChallengeProps): OTPChallenge;
+    static generateCode(length?: number): string;
+    private static hashCode;
+    verify(code: string): boolean;
+    resend(newCode: string): boolean;
+    isExpired(): boolean;
+    canResend(): boolean;
+    canAttempt(): boolean;
+    get id(): string;
+    get identifier(): Identifier;
+    get channel(): ChallengeChannel;
+    get intent(): ChallengeIntent;
+    get status(): ChallengeStatus;
+    get attempts(): number;
+    get resendCount(): number;
+    get expiresAt(): Date;
+    get createdAt(): Date;
+    get ipHash(): string | undefined;
+    get deviceId(): string | undefined;
+    toPersistence(): {
+        id: string;
+        identifierHash: string;
+        identifierValue: string;
+        identifierType: import("../value-objects/Identifier").IdentifierType;
+        channel: ChallengeChannel;
+        intent: ChallengeIntent;
+        codeHash: string;
+        expiresAt: string;
+        attempts: number;
+        maxAttempts: number;
+        resendCount: number;
+        maxResends: number;
+        ipHash: string | undefined;
+        deviceId: string | undefined;
+        status: ChallengeStatus;
+        createdAt: string;
+        lastAttemptAt: string | undefined;
+        ttl: number;
+    };
+    toJSON(): {
+        id: string;
+        identifier: {
+            value: string;
+            type: import("../value-objects/Identifier").IdentifierType;
+            hash: string;
+        };
+        channel: ChallengeChannel;
+        intent: ChallengeIntent;
+        status: ChallengeStatus;
+        attempts: number;
+        maxAttempts: number;
+        resendCount: number;
+        maxResends: number;
+        canAttempt: boolean;
+        canResend: boolean;
+        expiresAt: string;
+        createdAt: string;
+    };
+}
