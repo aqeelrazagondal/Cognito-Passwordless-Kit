@@ -5,15 +5,22 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 var OTPService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OTPService = void 0;
 const common_1 = require("@nestjs/common");
 const OTPChallenge_1 = require("../../../packages/auth-kit-core/src/domain/entities/OTPChallenge");
+const tokens_1 = require("../../persistence/tokens");
 let OTPService = OTPService_1 = class OTPService {
-    constructor() {
+    constructor(challengesRepo) {
+        this.challengesRepo = challengesRepo;
         this.logger = new common_1.Logger(OTPService_1.name);
-        this.challenges = new Map();
     }
     async sendOTP(params) {
         const code = OTPChallenge_1.OTPChallenge.generateCode(6);
@@ -25,7 +32,7 @@ let OTPService = OTPService_1 = class OTPService {
             ipHash: params.ipHash,
             deviceId: params.deviceId,
         });
-        this.challenges.set(challenge.id, challenge);
+        await this.challengesRepo.create(challenge);
         this.logger.log(`OTP Code for ${params.identifier.value}: ${code}`);
         this.logger.log(`Challenge ID: ${challenge.id}`);
         return {
@@ -34,19 +41,14 @@ let OTPService = OTPService_1 = class OTPService {
         };
     }
     async verifyOTP(params) {
-        const challenges = Array.from(this.challenges.values()).filter((c) => c.identifier.equals(params.identifier) && c.status === 'pending');
-        if (challenges.length === 0) {
+        const active = await this.challengesRepo.getActiveByIdentifier(params.identifier);
+        if (!active) {
             throw new common_1.BadRequestException('No active challenge found');
         }
-        const challenge = challenges.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
-        if (!challenge.canAttempt()) {
-            throw new common_1.BadRequestException('Challenge expired or max attempts reached');
-        }
-        const isValid = challenge.verify(params.code);
+        const isValid = await this.challengesRepo.verifyAndConsume(active.id, params.code);
         if (!isValid) {
             throw new common_1.BadRequestException({
                 message: 'Invalid OTP code',
-                attemptsRemaining: challenge.canAttempt() ? 3 - challenge.attempts : 0,
             });
         }
         return {
@@ -56,29 +58,22 @@ let OTPService = OTPService_1 = class OTPService {
         };
     }
     async resendOTP(params) {
-        const challenges = Array.from(this.challenges.values()).filter((c) => c.identifier.equals(params.identifier) && c.status === 'pending');
-        if (challenges.length === 0) {
+        const active = await this.challengesRepo.getActiveByIdentifier(params.identifier);
+        if (!active) {
             throw new common_1.BadRequestException('No active challenge found');
         }
-        const challenge = challenges.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
-        if (!challenge.canResend()) {
-            throw new common_1.BadRequestException('Max resend attempts reached');
-        }
-        const newCode = OTPChallenge_1.OTPChallenge.generateCode(6);
-        const resent = challenge.resend(newCode);
-        if (!resent) {
-            throw new common_1.BadRequestException('Cannot resend at this time');
-        }
-        this.logger.log(`Resend OTP Code for ${params.identifier.value}: ${newCode}`);
+        const resendCount = await this.challengesRepo.incrementSendCount(active.id);
+        this.logger.log(`Resent OTP for ${params.identifier.value}. resendCount=${resendCount}`);
         return {
             success: true,
-            expiresAt: challenge.expiresAt,
-            resendCount: challenge.resendCount,
+            resendCount,
         };
     }
 };
 exports.OTPService = OTPService;
 exports.OTPService = OTPService = OTPService_1 = __decorate([
-    (0, common_1.Injectable)()
+    (0, common_1.Injectable)(),
+    __param(0, (0, common_1.Inject)(tokens_1.CHALLENGE_REPOSITORY)),
+    __metadata("design:paramtypes", [Object])
 ], OTPService);
 //# sourceMappingURL=otp.service.js.map

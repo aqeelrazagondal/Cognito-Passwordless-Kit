@@ -15,17 +15,62 @@ const common_1 = require("@nestjs/common");
 const otp_service_1 = require("./otp.service");
 const magic_link_service_1 = require("./magic-link.service");
 const rate_limit_service_1 = require("./rate-limit.service");
+const denylist_service_1 = require("../../shared/services/denylist.service");
+const abuse_detector_service_1 = require("../../shared/services/abuse-detector.service");
+const captcha_service_1 = require("../../shared/services/captcha.service");
 const Identifier_1 = require("../../../packages/auth-kit-core/src/domain/value-objects/Identifier");
 let AuthService = AuthService_1 = class AuthService {
-    constructor(otpService, magicLinkService, rateLimitService) {
+    constructor(otpService, magicLinkService, rateLimitService, denylistService, abuseDetectorService, captchaService) {
         this.otpService = otpService;
         this.magicLinkService = magicLinkService;
         this.rateLimitService = rateLimitService;
+        this.denylistService = denylistService;
+        this.abuseDetectorService = abuseDetectorService;
+        this.captchaService = captchaService;
         this.logger = new common_1.Logger(AuthService_1.name);
     }
     async startAuth(params) {
         this.logger.log(`Starting auth for identifier via ${params.channel}`);
         const identifier = Identifier_1.Identifier.create(params.identifier);
+        const denylistCheck = await this.denylistService.checkIdentifier(params.identifier);
+        if (denylistCheck.blocked) {
+            throw new common_1.BadRequestException({
+                message: 'Identifier is blocked',
+                reason: denylistCheck.reason,
+                source: denylistCheck.source,
+            });
+        }
+        const abuseCheck = await this.abuseDetectorService.checkAbuse({
+            identifier: params.identifier,
+            identifierHash: identifier.hash,
+            ip: params.ip,
+            userAgent: params.userAgent,
+            geoCountry: params.geoCountry,
+            geoCity: params.geoCity,
+            timestamp: new Date(),
+        });
+        if (abuseCheck.action === 'block') {
+            throw new common_1.BadRequestException({
+                message: 'Request blocked due to suspicious activity',
+                reasons: abuseCheck.reasons,
+                riskScore: abuseCheck.riskScore,
+            });
+        }
+        if (abuseCheck.action === 'challenge' || this.captchaService.isConfigured()) {
+            if (!params.captchaToken) {
+                throw new common_1.BadRequestException({
+                    message: 'CAPTCHA verification required',
+                    requiresCaptcha: true,
+                });
+            }
+            const captchaResult = await this.captchaService.verifyToken(params.captchaToken, params.ip);
+            if (!captchaResult.success) {
+                throw new common_1.BadRequestException({
+                    message: 'CAPTCHA verification failed',
+                    error: captchaResult.error,
+                });
+            }
+        }
         const rateLimitCheck = await this.rateLimitService.checkLimits({
             identifier: identifier.hash,
             ip: params.ip,
@@ -131,6 +176,9 @@ exports.AuthService = AuthService = AuthService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [otp_service_1.OTPService,
         magic_link_service_1.MagicLinkService,
-        rate_limit_service_1.RateLimitService])
+        rate_limit_service_1.RateLimitService,
+        denylist_service_1.DenylistService,
+        abuse_detector_service_1.AbuseDetectorService,
+        captcha_service_1.CaptchaService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

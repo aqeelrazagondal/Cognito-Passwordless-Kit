@@ -1,14 +1,16 @@
-import { BindDeviceDto } from '../dto/device.dto';
+import { BindDeviceDto, RevokeDeviceDto } from '../dto/device.dto';
+import { IDeviceRepository } from '../../../packages/auth-kit-core/src/infrastructure/interfaces/IDeviceRepository';
 export declare class DeviceService {
+    private readonly devicesRepo;
     private readonly logger;
-    private readonly devices;
+    constructor(devicesRepo: IDeviceRepository);
     bindDevice(dto: BindDeviceDto): Promise<{
         success: boolean;
         deviceId: string;
         trusted: boolean;
         message: string;
     }>;
-    revokeDevice(deviceId: string): Promise<{
+    revokeDevice(dto: RevokeDeviceDto): Promise<{
         success: boolean;
         message: string;
     }>;

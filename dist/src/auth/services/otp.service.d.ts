@@ -1,7 +1,9 @@
 import { Identifier } from '../../../packages/auth-kit-core/src/domain/value-objects/Identifier';
+import { IChallengeRepository } from '../../../packages/auth-kit-core/src/infrastructure/interfaces/IChallengeRepository';
 export declare class OTPService {
+    private readonly challengesRepo;
     private readonly logger;
-    private readonly challenges;
+    constructor(challengesRepo: IChallengeRepository);
     sendOTP(params: {
         identifier: Identifier;
         channel: 'sms' | 'email' | 'whatsapp';
@@ -24,7 +26,6 @@ export declare class OTPService {
         identifier: Identifier;
     }): Promise<{
         success: boolean;
-        expiresAt: Date;
         resendCount: number;
     }>;
 }

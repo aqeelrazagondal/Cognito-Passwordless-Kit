@@ -1,4 +1,4 @@
-import { Controller, Post, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Post, Delete, Body } from '@nestjs/common';
 import { DeviceService } from '../services/device.service';
 import { BindDeviceDto, RevokeDeviceDto } from '../dto/device.dto';
 

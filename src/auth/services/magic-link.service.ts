@@ -1,23 +1,41 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Identifier } from '../../../packages/auth-kit-core/src/domain/value-objects/Identifier';
 import { MagicLinkToken } from '../../../packages/auth-kit-core/src/domain/services/MagicLinkToken';
+import { SecretsService } from '../../shared/config/secrets.service';
 
 @Injectable()
-export class MagicLinkService {
+export class MagicLinkService implements OnModuleInit {
   private readonly logger = new Logger(MagicLinkService.name);
-  private readonly tokenService: MagicLinkToken;
+  private tokenService: MagicLinkToken | null = null;
   private readonly usedTokens = new Set<string>(); // In-memory for demo
 
-  constructor(private readonly configService: ConfigService) {
-    const secret = this.configService.get<string>('JWT_SECRET') || 'dev-secret-change-me';
-    this.tokenService = new MagicLinkToken(secret);
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly secretsService: SecretsService,
+  ) {}
+
+  async onModuleInit() {
+    try {
+      const secret = await this.secretsService.getJWTSecret();
+      this.tokenService = new MagicLinkToken(secret);
+      this.logger.log('MagicLinkService initialized with JWT secret from Secrets Manager');
+    } catch (error: any) {
+      // Fallback to environment variable for development
+      const fallback = this.configService.get<string>('JWT_SECRET') || 'dev-secret-change-me';
+      this.tokenService = new MagicLinkToken(fallback);
+      this.logger.warn('Using JWT_SECRET from environment (fallback mode)');
+    }
   }
 
   async sendMagicLink(params: {
     identifier: Identifier;
     intent: 'login' | 'bind' | 'verifyContact';
   }) {
+    if (!this.tokenService) {
+      throw new BadRequestException('JWT secret not initialized');
+    }
+
     const challengeId = `challenge_${Date.now()}`;
     const baseUrl = this.configService.get<string>('BASE_URL') || 'http://localhost:3000';
 
@@ -39,6 +57,10 @@ export class MagicLinkService {
   }
 
   async verifyMagicLink(params: { token: string }) {
+    if (!this.tokenService) {
+      throw new BadRequestException('JWT secret not initialized');
+    }
+
     try {
       const payload = this.tokenService.verify(params.token);
 

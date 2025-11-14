@@ -10,11 +10,13 @@ exports.DeviceModule = void 0;
 const common_1 = require("@nestjs/common");
 const device_controller_1 = require("./controllers/device.controller");
 const device_service_1 = require("./services/device.service");
+const persistence_module_1 = require("../persistence/persistence.module");
 let DeviceModule = class DeviceModule {
 };
 exports.DeviceModule = DeviceModule;
 exports.DeviceModule = DeviceModule = __decorate([
     (0, common_1.Module)({
+        imports: [persistence_module_1.PersistenceModule],
         controllers: [device_controller_1.DeviceController],
         providers: [device_service_1.DeviceService],
         exports: [device_service_1.DeviceService],

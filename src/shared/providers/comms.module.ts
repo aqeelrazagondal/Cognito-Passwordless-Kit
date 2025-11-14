@@ -12,14 +12,16 @@ import { SESAdapter } from '../../../packages/auth-kit-adapters/src/email/ses.ad
 import { TwilioAdapter } from '../../../packages/auth-kit-adapters/src/sms/twilio.adapter';
 import { VonageAdapter } from '../../../packages/auth-kit-adapters/src/sms/vonage.adapter';
 import { TwilioWhatsAppAdapter } from '../../../packages/auth-kit-adapters/src/whatsapp/twilio-whatsapp.adapter';
+import { SecretsModule } from '../config/secrets.module';
+import { SecretsService } from '../config/secrets.service';
 
 @Global()
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, SecretsModule],
   providers: [
     {
       provide: CommsProvider,
-      useFactory: (configService: ConfigService) => {
+      useFactory: async (configService: ConfigService, secretsService: SecretsService) => {
         const commsProvider = new CommsProvider();
 
         // Register AWS SNS (default for SMS)
@@ -41,10 +43,12 @@ import { TwilioWhatsAppAdapter } from '../../../packages/auth-kit-adapters/src/w
         });
         commsProvider.registerProvider(sesAdapter);
 
-        // Register Twilio SMS (optional)
-        const twilioAccountSid = configService.get('TWILIO_ACCOUNT_SID');
-        const twilioAuthToken = configService.get('TWILIO_AUTH_TOKEN');
-        const twilioFromNumber = configService.get('TWILIO_FROM_NUMBER');
+        // Register Twilio SMS (optional) - try Secrets Manager first, fallback to env
+        let twilioSecret = await secretsService.getTwilioSecret();
+        let twilioAccountSid = twilioSecret?.accountSid || configService.get('TWILIO_ACCOUNT_SID');
+        let twilioAuthToken = twilioSecret?.authToken || configService.get('TWILIO_AUTH_TOKEN');
+        let twilioFromNumber = twilioSecret?.fromNumber || configService.get('TWILIO_FROM_NUMBER');
+        let twilioWhatsAppNumber = twilioSecret?.whatsappNumber || configService.get('TWILIO_WHATSAPP_NUMBER');
 
         if (twilioAccountSid && twilioAuthToken && twilioFromNumber) {
           const twilioAdapter = new TwilioAdapter({
@@ -55,10 +59,11 @@ import { TwilioWhatsAppAdapter } from '../../../packages/auth-kit-adapters/src/w
           commsProvider.registerProvider(twilioAdapter);
         }
 
-        // Register Vonage SMS (optional)
-        const vonageApiKey = configService.get('VONAGE_API_KEY');
-        const vonageApiSecret = configService.get('VONAGE_API_SECRET');
-        const vonageFromNumber = configService.get('VONAGE_FROM_NUMBER');
+        // Register Vonage SMS (optional) - try Secrets Manager first, fallback to env
+        const vonageSecret = await secretsService.getVonageSecret();
+        const vonageApiKey = vonageSecret?.apiKey || configService.get('VONAGE_API_KEY');
+        const vonageApiSecret = vonageSecret?.apiSecret || configService.get('VONAGE_API_SECRET');
+        const vonageFromNumber = vonageSecret?.fromNumber || configService.get('VONAGE_FROM_NUMBER');
 
         if (vonageApiKey && vonageApiSecret && vonageFromNumber) {
           const vonageAdapter = new VonageAdapter({
@@ -70,8 +75,6 @@ import { TwilioWhatsAppAdapter } from '../../../packages/auth-kit-adapters/src/w
         }
 
         // Register Twilio WhatsApp (optional)
-        const twilioWhatsAppNumber = configService.get('TWILIO_WHATSAPP_NUMBER');
-
         if (twilioAccountSid && twilioAuthToken && twilioWhatsAppNumber) {
           const twilioWhatsAppAdapter = new TwilioWhatsAppAdapter({
             accountSid: twilioAccountSid,
@@ -83,7 +86,7 @@ import { TwilioWhatsAppAdapter } from '../../../packages/auth-kit-adapters/src/w
 
         return commsProvider;
       },
-      inject: [ConfigService],
+      inject: [ConfigService, SecretsService],
     },
   ],
   exports: [CommsProvider],

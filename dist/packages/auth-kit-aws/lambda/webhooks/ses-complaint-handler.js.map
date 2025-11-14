@@ -1,0 +1,1 @@
+{"version":3,"file":"ses-complaint-handler.js","sourceRoot":"","sources":["../../../../../packages/auth-kit-aws/lambda/webhooks/ses-complaint-handler.ts"],"names":[],"mappings":";;AAcA,0BAGC;AATD,6DAAmE;AAM5D,KAAK,UAAU,OAAO,CAAC,KAAe,EAAE,OAAgB;IAE7D,OAAO,IAAA,4BAAgB,EAAC,KAAK,EAAE,OAAO,CAAC,CAAC;AAC1C,CAAC"}

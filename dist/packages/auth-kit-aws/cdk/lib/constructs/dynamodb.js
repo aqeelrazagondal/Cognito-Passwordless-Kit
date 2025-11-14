@@ -120,6 +120,31 @@ class DynamoDBConstruct extends constructs_1.Construct {
             sortKey: { name: 'timestamp', type: dynamodb.AttributeType.STRING },
             projectionType: dynamodb.ProjectionType.ALL,
         });
+        this.denylistTable = new dynamodb.Table(this, 'DenylistTable', {
+            tableName: `authkit-denylist-${environment}`,
+            partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING },
+            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+            encryption: dynamodb.TableEncryption.CUSTOMER_MANAGED,
+            encryptionKey: kmsKey,
+            timeToLiveAttribute: 'ttl',
+            removalPolicy,
+        });
+        this.bouncesTable = new dynamodb.Table(this, 'BouncesTable', {
+            tableName: `authkit-bounces-${environment}`,
+            partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING },
+            sortKey: { name: 'sk', type: dynamodb.AttributeType.STRING },
+            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+            encryption: dynamodb.TableEncryption.CUSTOMER_MANAGED,
+            encryptionKey: kmsKey,
+            timeToLiveAttribute: 'ttl',
+            removalPolicy,
+        });
+        this.bouncesTable.addGlobalSecondaryIndex({
+            indexName: 'identifierHash-timestamp-index',
+            partitionKey: { name: 'identifierHash', type: dynamodb.AttributeType.STRING },
+            sortKey: { name: 'timestamp', type: dynamodb.AttributeType.NUMBER },
+            projectionType: dynamodb.ProjectionType.ALL,
+        });
         new cdk.CfnOutput(this, 'ChallengesTableName', {
             value: this.challengesTable.tableName,
             exportName: `AuthKit-${environment}-ChallengesTable`,
@@ -135,6 +160,14 @@ class DynamoDBConstruct extends constructs_1.Construct {
         new cdk.CfnOutput(this, 'AuditLogsTableName', {
             value: this.auditLogsTable.tableName,
             exportName: `AuthKit-${environment}-AuditLogsTable`,
+        });
+        new cdk.CfnOutput(this, 'DenylistTableName', {
+            value: this.denylistTable.tableName,
+            exportName: `AuthKit-${environment}-DenylistTable`,
+        });
+        new cdk.CfnOutput(this, 'BouncesTableName', {
+            value: this.bouncesTable.tableName,
+            exportName: `AuthKit-${environment}-BouncesTable`,
         });
     }
 }

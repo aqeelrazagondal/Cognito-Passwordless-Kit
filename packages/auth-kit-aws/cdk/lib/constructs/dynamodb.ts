@@ -16,6 +16,8 @@ export class DynamoDBConstruct extends Construct {
   public readonly devicesTable: dynamodb.Table;
   public readonly countersTable: dynamodb.Table;
   public readonly auditLogsTable: dynamodb.Table;
+  public readonly denylistTable: dynamodb.Table;
+  public readonly bouncesTable: dynamodb.Table;
 
   constructor(scope: Construct, id: string, props: DynamoDBConstructProps) {
     super(scope, id);
@@ -122,6 +124,37 @@ export class DynamoDBConstruct extends Construct {
       projectionType: dynamodb.ProjectionType.ALL,
     });
 
+    // Denylist Table
+    this.denylistTable = new dynamodb.Table(this, 'DenylistTable', {
+      tableName: `authkit-denylist-${environment}`,
+      partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING }, // DENY#identifierHash
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      encryption: dynamodb.TableEncryption.CUSTOMER_MANAGED,
+      encryptionKey: kmsKey,
+      timeToLiveAttribute: 'ttl',
+      removalPolicy,
+    });
+
+    // Bounces Table
+    this.bouncesTable = new dynamodb.Table(this, 'BouncesTable', {
+      tableName: `authkit-bounces-${environment}`,
+      partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING }, // BOUNCE#identifierHash or COMPLAINT#identifierHash
+      sortKey: { name: 'sk', type: dynamodb.AttributeType.STRING }, // TS#timestamp
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      encryption: dynamodb.TableEncryption.CUSTOMER_MANAGED,
+      encryptionKey: kmsKey,
+      timeToLiveAttribute: 'ttl',
+      removalPolicy,
+    });
+
+    // GSI for querying bounces by identifier hash
+    this.bouncesTable.addGlobalSecondaryIndex({
+      indexName: 'identifierHash-timestamp-index',
+      partitionKey: { name: 'identifierHash', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'timestamp', type: dynamodb.AttributeType.NUMBER },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
     // Outputs
     new cdk.CfnOutput(this, 'ChallengesTableName', {
       value: this.challengesTable.tableName,
@@ -141,6 +174,16 @@ export class DynamoDBConstruct extends Construct {
     new cdk.CfnOutput(this, 'AuditLogsTableName', {
       value: this.auditLogsTable.tableName,
       exportName: `AuthKit-${environment}-AuditLogsTable`,
+    });
+
+    new cdk.CfnOutput(this, 'DenylistTableName', {
+      value: this.denylistTable.tableName,
+      exportName: `AuthKit-${environment}-DenylistTable`,
+    });
+
+    new cdk.CfnOutput(this, 'BouncesTableName', {
+      value: this.bouncesTable.tableName,
+      exportName: `AuthKit-${environment}-BouncesTable`,
     });
   }
 }

@@ -1,5 +1,5 @@
 import { DeviceService } from '../services/device.service';
-import { BindDeviceDto } from '../dto/device.dto';
+import { BindDeviceDto, RevokeDeviceDto } from '../dto/device.dto';
 export declare class DeviceController {
     private readonly deviceService;
     constructor(deviceService: DeviceService);
@@ -9,7 +9,7 @@ export declare class DeviceController {
         trusted: boolean;
         message: string;
     }>;
-    revokeDevice(deviceId: string): Promise<{
+    revokeDevice(dto: RevokeDeviceDto): Promise<{
         success: boolean;
         message: string;
     }>;

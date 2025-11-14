@@ -14,15 +14,31 @@ exports.MagicLinkService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const MagicLinkToken_1 = require("../../../packages/auth-kit-core/src/domain/services/MagicLinkToken");
+const secrets_service_1 = require("../../shared/config/secrets.service");
 let MagicLinkService = MagicLinkService_1 = class MagicLinkService {
-    constructor(configService) {
+    constructor(configService, secretsService) {
         this.configService = configService;
+        this.secretsService = secretsService;
         this.logger = new common_1.Logger(MagicLinkService_1.name);
+        this.tokenService = null;
         this.usedTokens = new Set();
-        const secret = this.configService.get('JWT_SECRET') || 'dev-secret-change-me';
-        this.tokenService = new MagicLinkToken_1.MagicLinkToken(secret);
+    }
+    async onModuleInit() {
+        try {
+            const secret = await this.secretsService.getJWTSecret();
+            this.tokenService = new MagicLinkToken_1.MagicLinkToken(secret);
+            this.logger.log('MagicLinkService initialized with JWT secret from Secrets Manager');
+        }
+        catch (error) {
+            const fallback = this.configService.get('JWT_SECRET') || 'dev-secret-change-me';
+            this.tokenService = new MagicLinkToken_1.MagicLinkToken(fallback);
+            this.logger.warn('Using JWT_SECRET from environment (fallback mode)');
+        }
     }
     async sendMagicLink(params) {
+        if (!this.tokenService) {
+            throw new common_1.BadRequestException('JWT secret not initialized');
+        }
         const challengeId = `challenge_${Date.now()}`;
         const baseUrl = this.configService.get('BASE_URL') || 'http://localhost:3000';
         const link = this.tokenService.generateLink({
@@ -39,6 +55,9 @@ let MagicLinkService = MagicLinkService_1 = class MagicLinkService {
         };
     }
     async verifyMagicLink(params) {
+        if (!this.tokenService) {
+            throw new common_1.BadRequestException('JWT secret not initialized');
+        }
         try {
             const payload = this.tokenService.verify(params.token);
             if (this.usedTokens.has(payload.jti)) {
@@ -60,6 +79,7 @@ let MagicLinkService = MagicLinkService_1 = class MagicLinkService {
 exports.MagicLinkService = MagicLinkService;
 exports.MagicLinkService = MagicLinkService = MagicLinkService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [config_1.ConfigService])
+    __metadata("design:paramtypes", [config_1.ConfigService,
+        secrets_service_1.SecretsService])
 ], MagicLinkService);
 //# sourceMappingURL=magic-link.service.js.map

@@ -17,6 +17,12 @@ export interface CognitoConstructProps {
         sesIdentity: string;
     };
     kmsKey: kms.Key;
+    secrets?: {
+        jwtSecretArn: string;
+        twilioSecretArn?: string;
+        captchaSecretArn?: string;
+        vonageSecretArn?: string;
+    };
 }
 export declare class CognitoConstruct extends Construct {
     readonly userPool: cognito.UserPool;

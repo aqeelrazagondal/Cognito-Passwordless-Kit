@@ -10,5 +10,6 @@ export declare class BindDeviceDto {
     pushToken?: string;
 }
 export declare class RevokeDeviceDto {
+    userId: string;
     deviceId: string;
 }

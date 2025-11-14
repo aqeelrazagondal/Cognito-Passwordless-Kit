@@ -1,12 +1,18 @@
 import { OTPService } from './otp.service';
 import { MagicLinkService } from './magic-link.service';
 import { RateLimitService } from './rate-limit.service';
+import { DenylistService } from '../../shared/services/denylist.service';
+import { AbuseDetectorService } from '../../shared/services/abuse-detector.service';
+import { CaptchaService } from '../../shared/services/captcha.service';
 export declare class AuthService {
     private readonly otpService;
     private readonly magicLinkService;
     private readonly rateLimitService;
+    private readonly denylistService;
+    private readonly abuseDetectorService;
+    private readonly captchaService;
     private readonly logger;
-    constructor(otpService: OTPService, magicLinkService: MagicLinkService, rateLimitService: RateLimitService);
+    constructor(otpService: OTPService, magicLinkService: MagicLinkService, rateLimitService: RateLimitService, denylistService: DenylistService, abuseDetectorService: AbuseDetectorService, captchaService: CaptchaService);
     startAuth(params: {
         identifier: string;
         channel: 'sms' | 'email' | 'whatsapp';
@@ -15,6 +21,8 @@ export declare class AuthService {
         userAgent: string;
         deviceFingerprint?: string;
         captchaToken?: string;
+        geoCountry?: string;
+        geoCity?: string;
     }): Promise<{
         success: boolean;
         method: string;
@@ -43,7 +51,6 @@ export declare class AuthService {
         identifier: string;
     }, ip: string): Promise<{
         success: boolean;
-        expiresAt: Date;
         resendCount: number;
     }>;
     getTokens(session: string): Promise<{

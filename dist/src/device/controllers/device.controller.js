@@ -23,8 +23,8 @@ let DeviceController = class DeviceController {
     async bindDevice(dto) {
         return this.deviceService.bindDevice(dto);
     }
-    async revokeDevice(deviceId) {
-        return this.deviceService.revokeDevice(deviceId);
+    async revokeDevice(dto) {
+        return this.deviceService.revokeDevice(dto);
     }
 };
 exports.DeviceController = DeviceController;
@@ -36,10 +36,10 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], DeviceController.prototype, "bindDevice", null);
 __decorate([
-    (0, common_1.Delete)('revoke/:deviceId'),
-    __param(0, (0, common_1.Param)('deviceId')),
+    (0, common_1.Delete)('revoke'),
+    __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [device_dto_1.RevokeDeviceDto]),
     __metadata("design:returntype", Promise)
 ], DeviceController.prototype, "revokeDevice", null);
 exports.DeviceController = DeviceController = __decorate([

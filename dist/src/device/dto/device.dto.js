@@ -36,5 +36,10 @@ __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
+], RevokeDeviceDto.prototype, "userId", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
 ], RevokeDeviceDto.prototype, "deviceId", void 0);
 //# sourceMappingURL=device.dto.js.map

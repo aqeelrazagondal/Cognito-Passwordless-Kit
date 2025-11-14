@@ -5,6 +5,8 @@ import {
   CHALLENGE_REPOSITORY,
   COUNTER_REPOSITORY,
   DEVICE_REPOSITORY,
+  DENYLIST_REPOSITORY,
+  BOUNCE_REPOSITORY,
 } from './tokens';
 
 // DynamoDB implementations
@@ -12,6 +14,8 @@ import { DynamoDBChallengeRepository } from '../../packages/auth-kit-core/src/in
 import { DynamoDBDeviceRepository } from '../../packages/auth-kit-core/src/infrastructure/repositories/DynamoDBDeviceRepository';
 import { DynamoDBCounterRepository } from '../../packages/auth-kit-core/src/infrastructure/repositories/DynamoDBCounterRepository';
 import { DynamoDBAuditLogRepository } from '../../packages/auth-kit-core/src/infrastructure/repositories/DynamoDBAuditLogRepository';
+import { DynamoDBDenylistRepository } from '../../packages/auth-kit-core/src/infrastructure/repositories/DynamoDBDenylistRepository';
+import { DynamoDBBounceRepository } from '../../packages/auth-kit-core/src/infrastructure/repositories/DynamoDBBounceRepository';
 
 // In-memory fallbacks
 import { MemoryChallengeRepository } from '../../packages/auth-kit-core/src/infrastructure/repositories/memory/MemoryChallengeRepository';
@@ -48,6 +52,20 @@ const repoProviders: Provider[] = [
     useFactory: (config: ConfigService) =>
       backendIsDynamo(config) ? new DynamoDBAuditLogRepository() : new DynamoDBAuditLogRepository(),
     // For now, use DynamoDB for audit if available; otherwise this could be a no-op logger implementation
+  },
+  {
+    provide: DENYLIST_REPOSITORY,
+    inject: [ConfigService],
+    useFactory: (config: ConfigService) =>
+      backendIsDynamo(config) ? new DynamoDBDenylistRepository() : new DynamoDBDenylistRepository(),
+    // For now, use DynamoDB for denylist; could add memory fallback if needed
+  },
+  {
+    provide: BOUNCE_REPOSITORY,
+    inject: [ConfigService],
+    useFactory: (config: ConfigService) =>
+      backendIsDynamo(config) ? new DynamoDBBounceRepository() : new DynamoDBBounceRepository(),
+    // For now, use DynamoDB for bounces; could add memory fallback if needed
   },
 ];
 

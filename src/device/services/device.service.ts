@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Device } from '../../../packages/auth-kit-core/src/domain/entities/Device';
 import { DeviceFingerprint } from '../../../packages/auth-kit-core/src/domain/value-objects/DeviceFingerprint';
 import { BindDeviceDto, RevokeDeviceDto } from '../dto/device.dto';

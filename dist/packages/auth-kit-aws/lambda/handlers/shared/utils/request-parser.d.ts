@@ -1,0 +1,11 @@
+import { APIGatewayProxyEvent } from 'aws-lambda';
+export declare function parseBody<T = any>(event: APIGatewayProxyEvent): T;
+export declare function getHeader(event: APIGatewayProxyEvent, headerName: string): string | undefined;
+export declare function getAuthToken(event: APIGatewayProxyEvent): string | undefined;
+export declare function getPathParameter(event: APIGatewayProxyEvent, name: string): string | undefined;
+export declare function getQueryParameter(event: APIGatewayProxyEvent, name: string): string | undefined;
+export declare function getClientIp(event: APIGatewayProxyEvent): string;
+export declare function getUserAgent(event: APIGatewayProxyEvent): string;
+export declare function getRequestId(event: APIGatewayProxyEvent): string;
+export declare function getCognitoUser(event: APIGatewayProxyEvent): any;
+export declare function getUserId(event: APIGatewayProxyEvent): string | undefined;

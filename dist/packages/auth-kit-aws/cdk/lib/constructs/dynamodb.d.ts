@@ -10,5 +10,7 @@ export declare class DynamoDBConstruct extends Construct {
     readonly devicesTable: dynamodb.Table;
     readonly countersTable: dynamodb.Table;
     readonly auditLogsTable: dynamodb.Table;
+    readonly denylistTable: dynamodb.Table;
+    readonly bouncesTable: dynamodb.Table;
     constructor(scope: Construct, id: string, props: DynamoDBConstructProps);
 }

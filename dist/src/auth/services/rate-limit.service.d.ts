@@ -1,8 +1,9 @@
+import { ICounterRepository } from '../../../packages/auth-kit-core/src/infrastructure/interfaces/ICounterRepository';
 export declare class RateLimitService {
+    private readonly countersRepo;
     private readonly logger;
     private readonly rateLimiter;
-    private readonly counters;
-    constructor();
+    constructor(countersRepo: ICounterRepository);
     checkLimits(params: {
         identifier: string;
         ip: string;

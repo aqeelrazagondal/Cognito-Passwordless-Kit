@@ -3,6 +3,8 @@ export const TABLES = {
   DEVICES: process.env.DEVICES_TABLE || process.env.AUTHKIT_DEVICES_TABLE || 'authkit-devices-local',
   COUNTERS: process.env.COUNTERS_TABLE || process.env.AUTHKIT_COUNTERS_TABLE || 'authkit-counters-local',
   AUDIT_LOGS: process.env.AUDIT_LOGS_TABLE || process.env.AUTHKIT_AUDIT_LOGS_TABLE || 'authkit-audit-logs-local',
+  DENYLIST: process.env.DENYLIST_TABLE || process.env.AUTHKIT_DENYLIST_TABLE || 'authkit-denylist-local',
+  BOUNCES: process.env.BOUNCES_TABLE || process.env.AUTHKIT_BOUNCES_TABLE || 'authkit-bounces-local',
 } as const;
 
 export const INDEXES = {

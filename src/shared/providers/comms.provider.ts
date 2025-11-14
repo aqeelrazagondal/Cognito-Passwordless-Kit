@@ -130,7 +130,8 @@ export class CommsProvider {
     for (const [name, provider] of this.providers.entries()) {
       try {
         results[name] = await provider.healthCheck();
-      } catch (error) {
+      } catch {
+        // Ignore health check errors
         results[name] = false;
       }
     }

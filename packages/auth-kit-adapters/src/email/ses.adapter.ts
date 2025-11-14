@@ -133,7 +133,8 @@ export class SESAdapter implements ICommProvider {
 
   async healthCheck(): Promise<boolean> {
     try {
-      // Check if we can access SES by validating parameters
+      // Try to send to a test address to validate SES access
+      // This will fail with specific errors if SES is not configured properly
       await this.client.send(
         new SendEmailCommand({
           Source: this.fromEmail,
@@ -142,19 +143,19 @@ export class SESAdapter implements ICommProvider {
             Subject: { Data: 'Test' },
             Body: { Text: { Data: 'Test' } },
           },
-          DryRun: true, // This parameter doesn't exist, will fail gracefully
         })
       );
       return true;
     } catch (error: any) {
-      // If error is about validation or missing DryRun, client is working
-      if (error.name === 'InvalidParameterValue' || error.name === 'UnknownOperation') {
+      // If error is about validation or configuration, client is accessible
+      if (error.name === 'InvalidParameterValue' || error.name === 'MessageRejected') {
         return true;
       }
       // Check if it's just that email is not verified
       if (error.message?.includes('not verified') || error.message?.includes('Email address')) {
         return true; // Client works, just needs verification
       }
+      // If error is about credentials or access, client is not working
       return false;
     }
   }

@@ -2,6 +2,9 @@ import { Injectable, Logger, BadRequestException, UnauthorizedException } from '
 import { OTPService } from './otp.service';
 import { MagicLinkService } from './magic-link.service';
 import { RateLimitService } from './rate-limit.service';
+import { DenylistService } from '../../shared/services/denylist.service';
+import { AbuseDetectorService } from '../../shared/services/abuse-detector.service';
+import { CaptchaService } from '../../shared/services/captcha.service';
 import { Identifier } from '../../../packages/auth-kit-core/src/domain/value-objects/Identifier';
 
 @Injectable()
@@ -12,6 +15,9 @@ export class AuthService {
     private readonly otpService: OTPService,
     private readonly magicLinkService: MagicLinkService,
     private readonly rateLimitService: RateLimitService,
+    private readonly denylistService: DenylistService,
+    private readonly abuseDetectorService: AbuseDetectorService,
+    private readonly captchaService: CaptchaService,
   ) {}
 
   async startAuth(params: {
@@ -22,11 +28,60 @@ export class AuthService {
     userAgent: string;
     deviceFingerprint?: string;
     captchaToken?: string;
+    geoCountry?: string;
+    geoCity?: string;
   }) {
     this.logger.log(`Starting auth for identifier via ${params.channel}`);
 
     // Parse and normalize identifier
     const identifier = Identifier.create(params.identifier);
+
+    // Check denylist first
+    const denylistCheck = await this.denylistService.checkIdentifier(params.identifier);
+    if (denylistCheck.blocked) {
+      throw new BadRequestException({
+        message: 'Identifier is blocked',
+        reason: denylistCheck.reason,
+        source: denylistCheck.source,
+      });
+    }
+
+    // Check abuse patterns
+    const abuseCheck = await this.abuseDetectorService.checkAbuse({
+      identifier: params.identifier,
+      identifierHash: identifier.hash,
+      ip: params.ip,
+      userAgent: params.userAgent,
+      geoCountry: params.geoCountry,
+      geoCity: params.geoCity,
+      timestamp: new Date(),
+    });
+
+    if (abuseCheck.action === 'block') {
+      throw new BadRequestException({
+        message: 'Request blocked due to suspicious activity',
+        reasons: abuseCheck.reasons,
+        riskScore: abuseCheck.riskScore,
+      });
+    }
+
+    // Verify CAPTCHA if required
+    if (abuseCheck.action === 'challenge' || this.captchaService.isConfigured()) {
+      if (!params.captchaToken) {
+        throw new BadRequestException({
+          message: 'CAPTCHA verification required',
+          requiresCaptcha: true,
+        });
+      }
+
+      const captchaResult = await this.captchaService.verifyToken(params.captchaToken, params.ip);
+      if (!captchaResult.success) {
+        throw new BadRequestException({
+          message: 'CAPTCHA verification failed',
+          error: captchaResult.error,
+        });
+      }
+    }
 
     // Check rate limits
     const rateLimitCheck = await this.rateLimitService.checkLimits({

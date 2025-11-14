@@ -77,20 +77,21 @@ export class SNSAdapter implements ICommProvider {
 
   async healthCheck(): Promise<boolean> {
     try {
-      // Simple check: try to get SMS attributes
+      // Simple check: attempt to publish to a test number
+      // This will fail with InvalidParameterException if credentials are invalid
       await this.client.send(
         new PublishCommand({
           PhoneNumber: '+1234567890', // Dummy number for validation check
           Message: 'test',
-          DryRun: true, // This parameter doesn't exist in SNS, will fail gracefully
         })
       );
       return true;
     } catch (error: any) {
-      // If error is about invalid phone number, client is working
+      // If error is about invalid phone number format, client is working
       if (error.message?.includes('Invalid') || error.name === 'InvalidParameterException') {
         return true;
       }
+      // If error is about credentials, client is not working
       return false;
     }
   }

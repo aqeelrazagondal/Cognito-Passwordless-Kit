@@ -41,18 +41,32 @@ const api_gateway_1 = require("./constructs/api-gateway");
 const kms_1 = require("./constructs/kms");
 const comms_1 = require("./constructs/comms");
 const observability_1 = require("./constructs/observability");
+const webhooks_1 = require("./constructs/webhooks");
+const secrets_1 = require("./constructs/secrets");
 class AuthKitStack extends cdk.Stack {
     constructor(scope, id, props) {
         super(scope, id, props);
         const { environment } = props;
         const kms = new kms_1.KMSConstruct(this, 'KMS', { environment });
+        const secrets = new secrets_1.SecretsConstruct(this, 'Secrets', {
+            environment,
+            kmsKey: kms.key,
+        });
         const dynamodb = new dynamodb_1.DynamoDBConstruct(this, 'DynamoDB', {
             environment,
             kmsKey: kms.key,
         });
+        const webhooks = new webhooks_1.WebhooksConstruct(this, 'Webhooks', {
+            environment,
+            denylistTable: dynamodb.denylistTable,
+            bouncesTable: dynamodb.bouncesTable,
+            kmsKey: kms.key,
+        });
+        const sesNotificationTopic = webhooks.createSESNotificationTopic(environment);
         const comms = new comms_1.CommsConstruct(this, 'Comms', {
             environment,
             kmsKey: kms.key,
+            bounceNotificationTopic: sesNotificationTopic,
         });
         const cognito = new cognito_1.CognitoConstruct(this, 'Cognito', {
             environment,
@@ -67,6 +81,12 @@ class AuthKitStack extends cdk.Stack {
                 sesIdentity: comms.sesIdentity,
             },
             kmsKey: kms.key,
+            secrets: {
+                jwtSecretArn: secrets.jwtSecret.arn,
+                twilioSecretArn: secrets.twilioSecret?.arn,
+                captchaSecretArn: secrets.captchaSecret?.arn,
+                vonageSecretArn: secrets.vonageSecret?.arn,
+            },
         });
         const api = new api_gateway_1.ApiGatewayConstruct(this, 'API', {
             environment,
@@ -81,7 +101,18 @@ class AuthKitStack extends cdk.Stack {
                 sesIdentity: comms.sesIdentity,
             },
             kmsKey: kms.key,
+            secrets: {
+                jwtSecretArn: secrets.jwtSecret.arn,
+                twilioSecretArn: secrets.twilioSecret?.arn,
+                captchaSecretArn: secrets.captchaSecret?.arn,
+                vonageSecretArn: secrets.vonageSecret?.arn,
+            },
         });
+        secrets.grantReadAccess([
+            ...cognito.triggerFunctions,
+            ...api.handlerFunctions,
+            webhooks.snsBounceHandler,
+        ]);
         const observability = new observability_1.ObservabilityConstruct(this, 'Observability', {
             environment,
             userPool: cognito.userPool,
@@ -89,12 +120,15 @@ class AuthKitStack extends cdk.Stack {
             lambdaFunctions: [
                 ...cognito.triggerFunctions,
                 ...api.handlerFunctions,
+                webhooks.snsBounceHandler,
             ],
             tables: [
                 dynamodb.challengesTable,
                 dynamodb.devicesTable,
                 dynamodb.countersTable,
                 dynamodb.auditLogsTable,
+                dynamodb.denylistTable,
+                dynamodb.bouncesTable,
             ],
         });
         new cdk.CfnOutput(this, 'UserPoolId', {
@@ -112,6 +146,14 @@ class AuthKitStack extends cdk.Stack {
         new cdk.CfnOutput(this, 'DashboardUrl', {
             value: observability.dashboardUrl,
             description: 'CloudWatch Dashboard URL',
+        });
+        new cdk.CfnOutput(this, 'SESNotificationTopicArn', {
+            value: sesNotificationTopic.topicArn,
+            description: 'SNS Topic ARN for SES bounce/complaint notifications. Configure this in SES Configuration Set.',
+        });
+        new cdk.CfnOutput(this, 'JWTSecretArn', {
+            value: secrets.jwtSecret.arn,
+            description: 'JWT Secret ARN in Secrets Manager',
         });
     }
 }

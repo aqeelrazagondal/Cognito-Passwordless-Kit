@@ -22,6 +22,12 @@ export interface CognitoConstructProps {
     sesIdentity: string;
   };
   kmsKey: kms.Key;
+  secrets?: {
+    jwtSecretArn: string;
+    twilioSecretArn?: string;
+    captchaSecretArn?: string;
+    vonageSecretArn?: string;
+  };
 }
 
 export class CognitoConstruct extends Construct {
@@ -32,10 +38,11 @@ export class CognitoConstruct extends Construct {
   constructor(scope: Construct, id: string, props: CognitoConstructProps) {
     super(scope, id);
 
-    const { environment, tables, comms, kmsKey } = props;
+    const { environment, tables, comms, kmsKey, secrets } = props;
 
     // Lambda trigger environment variables
-    const triggerEnvironment = {
+    const triggerEnvironment: { [key: string]: string } = {
+      ENVIRONMENT: environment,
       CHALLENGES_TABLE: tables.challenges.tableName,
       DEVICES_TABLE: tables.devices.tableName,
       COUNTERS_TABLE: tables.counters.tableName,
@@ -44,6 +51,20 @@ export class CognitoConstruct extends Construct {
       SES_IDENTITY: comms.sesIdentity,
       AWS_REGION: cdk.Stack.of(this).region,
     };
+
+    // Add secret ARNs if provided
+    if (secrets) {
+      triggerEnvironment.JWT_SECRET_ARN = secrets.jwtSecretArn;
+      if (secrets.twilioSecretArn) {
+        triggerEnvironment.TWILIO_SECRET_ARN = secrets.twilioSecretArn;
+      }
+      if (secrets.captchaSecretArn) {
+        triggerEnvironment.CAPTCHA_SECRET_ARN = secrets.captchaSecretArn;
+      }
+      if (secrets.vonageSecretArn) {
+        triggerEnvironment.VONAGE_SECRET_ARN = secrets.vonageSecretArn;
+      }
+    }
 
     // Define Auth Challenge Lambda
     const defineAuthChallengeFn = new lambdaNode.NodejsFunction(this, 'DefineAuthChallenge', {
@@ -54,6 +75,7 @@ export class CognitoConstruct extends Construct {
       timeout: cdk.Duration.seconds(10),
       memorySize: 256,
       environment: triggerEnvironment,
+      tracing: lambda.Tracing.ACTIVE, // Enable X-Ray tracing
       bundling: {
         minify: true,
         sourceMap: true,
@@ -70,6 +92,7 @@ export class CognitoConstruct extends Construct {
       timeout: cdk.Duration.seconds(30),
       memorySize: 512,
       environment: triggerEnvironment,
+      tracing: lambda.Tracing.ACTIVE, // Enable X-Ray tracing
       bundling: {
         minify: true,
         sourceMap: true,
@@ -86,6 +109,7 @@ export class CognitoConstruct extends Construct {
       timeout: cdk.Duration.seconds(10),
       memorySize: 256,
       environment: triggerEnvironment,
+      tracing: lambda.Tracing.ACTIVE, // Enable X-Ray tracing
       bundling: {
         minify: true,
         sourceMap: true,

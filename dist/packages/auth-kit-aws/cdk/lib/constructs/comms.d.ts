@@ -4,9 +4,11 @@ import * as kms from 'aws-cdk-lib/aws-kms';
 export interface CommsConstructProps {
     environment: string;
     kmsKey: kms.Key;
+    bounceNotificationTopic?: sns.Topic;
 }
 export declare class CommsConstruct extends Construct {
     readonly snsTopic: sns.Topic;
     readonly sesIdentity: string;
+    readonly configurationSetName?: string;
     constructor(scope: Construct, id: string, props: CommsConstructProps);
 }

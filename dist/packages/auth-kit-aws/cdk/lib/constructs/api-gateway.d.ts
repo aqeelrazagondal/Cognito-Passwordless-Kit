@@ -18,6 +18,12 @@ export interface ApiGatewayConstructProps {
         sesIdentity: string;
     };
     kmsKey: kms.Key;
+    secrets?: {
+        jwtSecretArn: string;
+        twilioSecretArn?: string;
+        captchaSecretArn?: string;
+        vonageSecretArn?: string;
+    };
 }
 export declare class ApiGatewayConstruct extends Construct {
     readonly httpApi: apigateway.HttpApi;

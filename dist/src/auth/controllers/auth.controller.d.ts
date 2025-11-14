@@ -25,7 +25,6 @@ export declare class AuthController {
     }>;
     resendAuth(dto: ResendAuthDto, ip: string): Promise<{
         success: boolean;
-        expiresAt: Date;
         resendCount: number;
     }>;
     getTokens(authorization: string): Promise<{
