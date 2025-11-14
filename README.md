@@ -228,37 +228,57 @@ Modern applications face critical challenges with traditional password-based aut
 
 ### Package Structure
 
+A modular, layered layout designed for clarity, reuse, and AWS-first deployments.
+
 ```
 packages/
-├── auth-kit-core/          # Domain layer (framework-agnostic)
-│   ├── domain/
-│   │   ├── entities/       # OTPChallenge, Device
-│   │   ├── value-objects/  # Identifier, DeviceFingerprint
-│   │   └── services/       # RateLimiter, MagicLinkToken
-│   └── infrastructure/
-│       ├── repositories/   # DynamoDB implementations
-│       └── interfaces/     # Repository abstractions
+├─ auth-kit-core/                 # Domain & application core (framework-agnostic)
+│  ├─ domain/
+│  │  ├─ entities/               # OTPChallenge, Device, etc.
+│  │  ├─ value-objects/          # Identifier, DeviceFingerprint, ...
+│  │  └─ services/               # RateLimiter, MagicLinkToken, policies
+│  └─ infrastructure/
+│     ├─ interfaces/             # Repository & provider abstractions
+│     └─ repositories/           # DynamoDB implementations
 │
-├── auth-kit-aws/           # AWS deployment (CDK + Lambda)
-│   ├── cdk/
-│   │   └── lib/
-│   │       ├── constructs/ # Reusable CDK constructs
-│   │       └── stacks/     # Stack definitions
-│   └── lambda/
-│       ├── handlers/       # API Gateway Lambda functions
-│       └── triggers/       # Cognito Lambda triggers
+├─ auth-kit-aws/                 # AWS IaC & serverless runtime
+│  ├─ cdk/
+│  │  ├─ bin/                    # App entrypoint (e.g., bin/auth-kit.ts)
+│  │  └─ lib/
+│  │     ├─ constructs/          # Cognito, API Gateway, DynamoDB, KMS, Comms, Observability
+│  │     └─ stacks/              # Stack orchestration (AuthKitStack, etc.)
+│  └─ lambda/
+│     ├─ handlers/               # API Gateway Lambdas (e.g., auth/getTokens.ts)
+│     └─ triggers/               # Cognito triggers (Define/Create/Verify challenges)
 │
-└── auth-kit-adapters/      # Communication providers
-    ├── sms/                # SNS, Twilio, Vonage
-    ├── email/              # SES with templates
-    └── whatsapp/           # Twilio WhatsApp
+└─ auth-kit-adapters/            # Pluggable comms providers
+   ├─ sms/                       # SNS, Twilio, Vonage
+   ├─ email/                     # SES (HTML templates, DKIM-ready)
+   └─ whatsapp/                  # Twilio WhatsApp Business
 
-src/                        # NestJS application
-├── auth/                   # Auth module
-├── device/                 # Device module
-├── persistence/            # Persistence module
-└── shared/                 # Shared utilities
+src/                              # NestJS application (HTTP orchestration)
+├─ auth/                          # Start/verify/resend; magic-links; tokens
+├─ device/                        # Device bind/revoke flows
+├─ persistence/                   # Repos, mappers, and storage glue
+├─ shared/                        # Config, logging, filters, guards
+└─ main.ts                        # App bootstrap
+
+test/                             # e2e + integration tests
+├─ e2e/                           # Playwright specs (browser flows)
+└─ integration/                   # API/service-level tests
+
+docs/                             # Project documentation (selected in root)
+   IMPLEMENTATION_GAP_ANALYSIS.md
+   PROJECT_STATUS.md
+   TESTING.md / TESTING_SUMMARY.md
+   DEPLOYMENT.md / SECRET_ROTATION.md
 ```
+
+Highlights:
+- Clear separation of concerns: core domain, AWS infrastructure, and provider adapters.
+- The NestJS app (`src/`) orchestrates HTTP flows; heavy lifting lives in `auth-kit-core`.
+- CDK (`packages/auth-kit-aws/cdk`) provides production-ready stacks with observability, secrets, and comms.
+- Adapters enable drop-in SMS/Email/WhatsApp providers with consistent interfaces.
 
 ---
 
