@@ -36,9 +36,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SecretsConstruct = void 0;
 const cdk = __importStar(require("aws-cdk-lib"));
 const secretsmanager = __importStar(require("aws-cdk-lib/aws-secretsmanager"));
+const iam = __importStar(require("aws-cdk-lib/aws-iam"));
 const lambda = __importStar(require("aws-cdk-lib/aws-lambda"));
+const lambdaNodejs = __importStar(require("aws-cdk-lib/aws-lambda-nodejs"));
 const constructs_1 = require("constructs");
 const crypto_1 = require("crypto");
+const path = __importStar(require("path"));
 class SecretsConstruct extends constructs_1.Construct {
     constructor(scope, id, props) {
         super(scope, id);
@@ -152,64 +155,33 @@ class SecretsConstruct extends constructs_1.Construct {
         };
     }
     createRotationLambda(secret, kmsKey) {
-        const rotationFn = new lambda.Function(this, 'JWTSecretRotation', {
-            runtime: lambda.Runtime.PYTHON_3_11,
-            handler: 'index.handler',
-            code: lambda.Code.fromInline(`
-import boto3
-import json
-import secrets
-import string
-
-def handler(event, context):
-    client = boto3.client('secretsmanager')
-    secret_arn = event['SecretId']
-    token = event['ClientRequestToken']
-    step = event['Step']
-
-    metadata = client.describe_secret(SecretId=secret_arn)
-    current_version = metadata['VersionIdToStages']
-    
-    if token not in current_version:
-        raise ValueError(f"Invalid token: {token}")
-    
-    if step == 'createSecret':
-        # Generate new secret
-        new_secret = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32))
-        client.put_secret_value(
-            SecretId=secret_arn,
-            ClientRequestToken=token,
-            SecretString=json.dumps({'secret': new_secret}),
-            VersionStages=['AWSPENDING']
-        )
-    elif step == 'setSecret':
-        # Nothing to do - secret already set
-        pass
-    elif step == 'testSecret':
-        # Test the new secret (can add validation here)
-        pass
-    elif step == 'finishSecret':
-        # Mark new version as current
-        client.update_secret_version_stage(
-            SecretId=secret_arn,
-            VersionStage='AWSCURRENT',
-            MoveToVersionId=token,
-            RemoveFromVersionId=metadata['ARN'].split(':')[-1]
-        )
-        client.update_secret_version_stage(
-            SecretId=secret_arn,
-            VersionStage='AWSPENDING',
-            RemoveFromVersionId=token
-        )
-    
-    return {'statusCode': 200}
-`),
+        const rotationFn = new lambdaNodejs.NodejsFunction(this, 'JWTSecretRotation', {
+            entry: path.join(__dirname, '../../../lambda/webhooks/rotate-jwt-key.ts'),
+            handler: 'handler',
+            runtime: lambda.Runtime.NODEJS_18_X,
             timeout: cdk.Duration.seconds(30),
-            memorySize: 128,
+            memorySize: 256,
+            environment: {
+                SECRET_ARN: secret.secretArn,
+            },
+            bundling: {
+                minify: true,
+                sourceMap: true,
+                externalModules: ['@aws-sdk/*'],
+            },
         });
         secret.grantRead(rotationFn);
         secret.grantWrite(rotationFn);
         kmsKey.grantDecrypt(rotationFn);
+        rotationFn.addToRolePolicy(new iam.PolicyStatement({
+            actions: [
+                'secretsmanager:DescribeSecret',
+                'secretsmanager:GetSecretValue',
+                'secretsmanager:PutSecretValue',
+                'secretsmanager:UpdateSecretVersionStage',
+            ],
+            resources: [secret.secretArn],
+        }));
         return rotationFn;
     }
     grantReadAccess(functions) {

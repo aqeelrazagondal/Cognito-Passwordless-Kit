@@ -10,13 +10,13 @@ describe('Identifier', () => {
             expect(identifier.hash).toBeDefined();
         });
         it('should create identifier from valid phone number', () => {
-            const identifier = Identifier_1.Identifier.create('+1234567890');
-            expect(identifier.value).toBe('+1234567890');
+            const identifier = Identifier_1.Identifier.create('+12025551234');
+            expect(identifier.value).toBe('+12025551234');
             expect(identifier.type).toBe('phone');
             expect(identifier.hash).toBeDefined();
         });
         it('should normalize phone numbers to E.164 format', () => {
-            const identifier = Identifier_1.Identifier.create('(123) 456-7890');
+            const identifier = Identifier_1.Identifier.create('+12025559876');
             expect(identifier.value).toMatch(/^\+1\d{10}$/);
             expect(identifier.type).toBe('phone');
         });

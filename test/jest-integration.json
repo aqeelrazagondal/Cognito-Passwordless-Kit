@@ -1,0 +1,22 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "..",
+  "testEnvironment": "node",
+  "testRegex": ".integration.spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": ["ts-jest", {
+      "tsconfig": {
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true
+      }
+    }]
+  },
+  "moduleNameMapper": {
+    "^@auth-kit-core/(.*)$": "<rootDir>/packages/auth-kit-core/src/$1",
+    "^@auth-kit-adapters/(.*)$": "<rootDir>/packages/auth-kit-adapters/src/$1",
+    "^@/(.*)$": "<rootDir>/src/$1",
+    "^nanoid$": "<rootDir>/test/mocks/nanoid.js"
+  },
+  "testTimeout": 60000,
+  "setupFilesAfterEnv": ["<rootDir>/test/integration-setup.ts"]
+}

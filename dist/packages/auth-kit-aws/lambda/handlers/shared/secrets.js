@@ -45,18 +45,52 @@ async function getSecret(secretArn) {
     }
 }
 async function getJWTSecret() {
-    const secretArn = process.env.JWT_SECRET_ARN ||
-        `authkit-jwt-secret-${process.env.ENVIRONMENT || 'dev'}`;
-    const secret = await getSecret(secretArn);
-    return secret.secret;
+    const secretArn = process.env.JWT_SECRET_ARN;
+    if (!secretArn) {
+        const envSecret = process.env.JWT_SECRET;
+        if (!envSecret) {
+            throw new Error('JWT_SECRET or JWT_SECRET_ARN must be set');
+        }
+        console.log('Using JWT_SECRET from environment variable (local development)');
+        return envSecret;
+    }
+    try {
+        const secret = await getSecret(secretArn);
+        return secret.secret;
+    }
+    catch (error) {
+        console.error('Failed to fetch JWT secret from Secrets Manager:', error);
+        const envSecret = process.env.JWT_SECRET;
+        if (envSecret) {
+            console.log('Falling back to JWT_SECRET environment variable');
+            return envSecret;
+        }
+        throw error;
+    }
 }
 async function getTwilioSecret() {
-    const secretArn = process.env.TWILIO_SECRET_ARN ||
-        `authkit-twilio-${process.env.ENVIRONMENT || 'dev'}`;
+    const secretArn = process.env.TWILIO_SECRET_ARN;
+    if (!secretArn) {
+        const accountSid = process.env.TWILIO_ACCOUNT_SID;
+        const authToken = process.env.TWILIO_AUTH_TOKEN;
+        const fromNumber = process.env.TWILIO_FROM_NUMBER;
+        const whatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER;
+        if (accountSid && authToken && fromNumber) {
+            console.log('Using Twilio credentials from environment variables');
+            return {
+                accountSid,
+                authToken,
+                fromNumber,
+                whatsappNumber,
+            };
+        }
+        return null;
+    }
     try {
         return await getSecret(secretArn);
     }
     catch (error) {
+        console.error('Failed to fetch Twilio secret:', error);
         return null;
     }
 }

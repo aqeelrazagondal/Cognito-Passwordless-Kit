@@ -70,18 +70,39 @@ export async function getSecret<T = any>(secretArn: string): Promise<T> {
 
 /**
  * Get JWT secret
+ * Falls back to JWT_SECRET environment variable for local development
  */
 export async function getJWTSecret(): Promise<string> {
-  const secretArn =
-    process.env.JWT_SECRET_ARN ||
-    `authkit-jwt-secret-${process.env.ENVIRONMENT || 'dev'}`;
+  const secretArn = process.env.JWT_SECRET_ARN;
 
-  const secret = await getSecret<{ secret: string }>(secretArn);
-  return secret.secret;
+  // Fallback to environment variable for local development
+  if (!secretArn) {
+    const envSecret = process.env.JWT_SECRET;
+    if (!envSecret) {
+      throw new Error('JWT_SECRET or JWT_SECRET_ARN must be set');
+    }
+    console.log('Using JWT_SECRET from environment variable (local development)');
+    return envSecret;
+  }
+
+  try {
+    const secret = await getSecret<{ secret: string }>(secretArn);
+    return secret.secret;
+  } catch (error: any) {
+    console.error('Failed to fetch JWT secret from Secrets Manager:', error);
+    // Fallback to environment variable if Secrets Manager fails
+    const envSecret = process.env.JWT_SECRET;
+    if (envSecret) {
+      console.log('Falling back to JWT_SECRET environment variable');
+      return envSecret;
+    }
+    throw error;
+  }
 }
 
 /**
  * Get Twilio secret
+ * Falls back to environment variables for local development
  */
 export async function getTwilioSecret(): Promise<{
   accountSid: string;
@@ -89,14 +110,32 @@ export async function getTwilioSecret(): Promise<{
   fromNumber?: string;
   whatsappNumber?: string;
 } | null> {
-  const secretArn =
-    process.env.TWILIO_SECRET_ARN ||
-    `authkit-twilio-${process.env.ENVIRONMENT || 'dev'}`;
+  const secretArn = process.env.TWILIO_SECRET_ARN;
+
+  // Fallback to environment variables for local development
+  if (!secretArn) {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const fromNumber = process.env.TWILIO_FROM_NUMBER;
+    const whatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER;
+
+    if (accountSid && authToken && fromNumber) {
+      console.log('Using Twilio credentials from environment variables');
+      return {
+        accountSid,
+        authToken,
+        fromNumber,
+        whatsappNumber,
+      };
+    }
+
+    return null; // Twilio not configured
+  }
 
   try {
     return await getSecret(secretArn);
   } catch (error: any) {
-    // Return null if secret doesn't exist (optional)
+    console.error('Failed to fetch Twilio secret:', error);
     return null;
   }
 }

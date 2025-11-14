@@ -27,7 +27,7 @@ describe('SecretsService', () => {
     } as any;
 
     mockSecretsClient = {
-      send: jest.fn(),
+      send: jest.fn() as any,
     } as any;
 
     // Mock the SecretsManagerClient constructor
@@ -44,7 +44,7 @@ describe('SecretsService', () => {
   describe('getJWTSecret', () => {
     it('should retrieve JWT secret from Secrets Manager', async () => {
       const mockSecret = { secret: 'test-jwt-secret-key' };
-      mockSecretsClient.send.mockResolvedValueOnce({
+      (mockSecretsClient.send as jest.Mock).mockResolvedValueOnce({
         SecretString: JSON.stringify(mockSecret),
       });
 
@@ -58,7 +58,7 @@ describe('SecretsService', () => {
 
     it('should cache JWT secret after first retrieval', async () => {
       const mockSecret = { secret: 'test-jwt-secret-key' };
-      mockSecretsClient.send.mockResolvedValueOnce({
+      (mockSecretsClient.send as jest.Mock).mockResolvedValueOnce({
         SecretString: JSON.stringify(mockSecret),
       });
 
@@ -70,7 +70,7 @@ describe('SecretsService', () => {
     });
 
     it('should fallback to environment variable if Secrets Manager fails', async () => {
-      mockSecretsClient.send.mockRejectedValueOnce(new Error('Secret not found'));
+      (mockSecretsClient.send as jest.Mock).mockRejectedValueOnce(new Error('Secret not found'));
       (configService.get as jest.Mock).mockReturnValueOnce('fallback-secret');
 
       const result = await service.getJWTSecret();
@@ -79,7 +79,7 @@ describe('SecretsService', () => {
     });
 
     it('should throw error if both Secrets Manager and env var fail', async () => {
-      mockSecretsClient.send.mockRejectedValueOnce(new Error('Secret not found'));
+      (mockSecretsClient.send as jest.Mock).mockRejectedValueOnce(new Error('Secret not found'));
       (configService.get as jest.Mock).mockReturnValueOnce(undefined);
 
       await expect(service.getJWTSecret()).rejects.toThrow('Failed to get JWT secret');
@@ -93,7 +93,7 @@ describe('SecretsService', () => {
         authToken: 'token123',
         fromNumber: '+1234567890',
       };
-      mockSecretsClient.send.mockResolvedValueOnce({
+      (mockSecretsClient.send as jest.Mock).mockResolvedValueOnce({
         SecretString: JSON.stringify(mockSecret),
       });
 
@@ -103,7 +103,7 @@ describe('SecretsService', () => {
     });
 
     it('should return null if secret does not exist', async () => {
-      mockSecretsClient.send.mockRejectedValueOnce(new Error('Secret not found'));
+      (mockSecretsClient.send as jest.Mock).mockRejectedValueOnce(new Error('Secret not found'));
 
       const result = await service.getTwilioSecret();
 
@@ -114,7 +114,7 @@ describe('SecretsService', () => {
   describe('refreshSecret', () => {
     it('should clear cache and reload secret', async () => {
       const mockSecret = { secret: 'test-jwt-secret-key' };
-      mockSecretsClient.send
+      (mockSecretsClient.send as jest.Mock)
         .mockResolvedValueOnce({
           SecretString: JSON.stringify(mockSecret),
         })
