@@ -608,10 +608,42 @@ MIT License - see [LICENSE](./LICENSE) for details
 
 ## 🔗 Links
 
-- **Documentation**: [PROJECT_STATUS.md](./PROJECT_STATUS.md)
-- **Deployment Guide**: [DEPLOYMENT.md](./DEPLOYMENT.md)
-- **Implementation Status**: [IMPLEMENTATION_GAP_ANALYSIS.md](./IMPLEMENTATION_GAP_ANALYSIS.md)
-- **Secret Rotation**: [SECRET_ROTATION.md](./SECRET_ROTATION.md)
+### 📚 Docs Index
+
+- Overview & Status
+  - [README (you are here)](./README.md)
+  - [Project Status & Roadmap](./PROJECT_STATUS.md)
+  - [Implementation Gap Analysis](./IMPLEMENTATION_GAP_ANALYSIS.md)
+
+- Getting Started
+  - [Deployment Guide](./DEPLOYMENT.md)
+  - [Configuration Guide](./docs/CONFIGURATION.md)
+  - [Local Development & Debugging](./docs/LOCAL_DEV_DEBUGGING.md)
+
+- API & Flows
+  - [API Reference & Endpoint Guide](./docs/API_REFERENCE.md)
+  - [Examples & Recipes](./docs/RECIPES.md)
+
+- Providers
+  - [Email (AWS SES)](./docs/PROVIDERS_SES.md)
+  - [SMS (AWS SNS & Twilio)](./docs/PROVIDERS_SMS.md)
+  - [WhatsApp (Twilio)](./docs/PROVIDERS_WHATSAPP.md)
+
+- Data & Security
+  - [DynamoDB Schema & Capacity](./docs/DYNAMODB_SCHEMA.md)
+  - [Security Model & Threat Model](./docs/SECURITY_MODEL.md)
+  - [Rate Limiting & Abuse Prevention](./docs/RATE_LIMITING.md)
+  - [Secret Rotation](./SECRET_ROTATION.md)
+
+- Operations
+  - [Observability & Alarms](./docs/OBSERVABILITY.md)
+  - [Testing Strategy](./TESTING.md) · [Summary](./TESTING_SUMMARY.md)
+  - [FAQ & Troubleshooting](./docs/FAQ_TROUBLESHOOTING.md)
+
+- Project
+  - [Release & Versioning](./docs/RELEASE_VERSIONING.md)
+  - [Contributing](./docs/CONTRIBUTING.md)
+  - [Security Policy](./docs/SECURITY_POLICY.md)
 
 ---
 
