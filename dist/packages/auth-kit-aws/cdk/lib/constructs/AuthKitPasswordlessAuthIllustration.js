@@ -1,0 +1,55 @@
+Create;
+a;
+modern;
+tech;
+illustration;
+showing;
+passwordless;
+authentication: a;
+smartphone;
+displaying;
+a;
+6 - digit;
+OTP;
+code;
+and;
+a;
+laptop;
+with (a)
+    magic;
+link;
+email, connected;
+by;
+glowing;
+blue;
+particles.Include;
+floating;
+security;
+icons(shield, lock, crossed - out, password).Background;
+deep;
+blue;
+to;
+purple;
+gradient;
+with (subtle)
+    circuit;
+patterns.Add;
+AWS;
+service;
+icons(Cognito, Lambda, DynamoDB);
+connected;
+by;
+thin;
+lines.Style;
+clean, professional, isometric;
+2.5;
+D.Text;
+overlay: "AuthKit - Passwordless Authentication".Color;
+scheme: blue, purple, cyan;
+accents.;
+16;
+9;
+ratio, 1200;
+x630px.
+;
+//# sourceMappingURL=AuthKitPasswordlessAuthIllustration.js.map

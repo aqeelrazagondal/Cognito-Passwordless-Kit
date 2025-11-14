@@ -537,26 +537,11 @@ cdk deploy AuthKitStack-prod --require-approval never
 
 ## 📊 Project Status
 
-**Current Progress: 73% Complete**
+For the up-to-date roadmap, metrics, and completion breakdown, see:
 
-### ✅ Completed (Production Ready)
-- Core domain layer (100%)
-- NestJS application (100%)
-- Persistence layer with DynamoDB (100%)
-- Cognito integration with Lambda triggers (100%)
-- Communication adapters (SNS, SES, Twilio, Vonage, WhatsApp) (100%)
-- API Gateway Lambda handlers (100%)
-- Observability (dashboards, alarms, X-Ray) (100%)
-- AWS infrastructure (88% - missing Secrets Manager)
+- [Project Status & Roadmap](./PROJECT_STATUS.md)
 
-### ⏳ Pending
-- Secrets Manager integration (0%)
-- Comprehensive testing (2% - only smoke tests)
-- Full documentation (25%)
-- CI/CD pipeline (0%)
-- Client examples (0%)
-
-**For detailed status, see [PROJECT_STATUS.md](./PROJECT_STATUS.md)**
+The README intentionally avoids duplicating detailed status that is maintained in the canonical status document above.
 
 ---
 
@@ -641,9 +626,7 @@ MIT License - see [LICENSE](./LICENSE) for details
   - [FAQ & Troubleshooting](./docs/FAQ_TROUBLESHOOTING.md)
 
 - Project
-  - [Release & Versioning](./docs/RELEASE_VERSIONING.md)
-  - [Contributing](./docs/CONTRIBUTING.md)
-  - [Security Policy](./docs/SECURITY_POLICY.md)
+  - [CI/CD Pipeline](./CICD.md)
 
 ---
 
